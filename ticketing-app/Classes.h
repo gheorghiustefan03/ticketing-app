@@ -1,4 +1,8 @@
 #pragma once
+#include <string>
+
+using namespace std;
+
 class Location {
 public:
 	static const int MIN_NAME_LEN = 2;
@@ -16,40 +20,25 @@ private:
 	string zones[Location::NR_ZONES] = { "Zone 1", "Zone 2" };
 	int nr_rows[Location::NR_ZONES] = { 0, 0 };
 	int seats_per_row[Location::NR_ZONES] = { 0, 0 };
-	char code[Location::NR_ZONES] = { 'A', 'B' }; //user-defined alphanumeric character which will be used to distinguish between zones
-
+	char code[Location::NR_ZONES] = { 'A', 'B' }; //user-defined alphabet character which will be used to distinguish between zones
 	static void checkZone(int zone);
 
 public:
 	char* getLocationName();
-
 	string getZoneName(int zone);
-
 	int getNrRowsForZone(int zone);
-
 	int getSeatsPerRow(int zone);
-
 	char getZoneCode(int zone);
-
 	void setLocationName(const char* name);
-
 	void setZoneName(int zone, string name);
-
 	void setNrRowsForZone(int zone, int nr_rows);
-
 	void setSeatsPerRowForZone(int zone, int nr_seats);
-
 	void setCodeForZone(int zone, char code);
-
 	Location();
-
 	Location(const char* location_name, string zone_names[Location::NR_ZONES],
 		int nr_rows[Location::NR_ZONES], int seats_per_row[Location::NR_ZONES], char code[Location::NR_ZONES]);
-
 	Location(const Location& source);
-
 	~Location();
-
 	Location operator=(const Location& source);
 };
 
@@ -59,9 +48,11 @@ public:
 	static const int MAX_DESC_LEN = 30;
 	static const int MIN_NAME_LEN = 2;
 	static const int MAX_NAME_LEN = 30;
-	static const int MAX_NR_SEATS = 50;
 	static const int OCCUPIED_SEAT = 1;
 	static const int FREE_SEAT = 0;
+	static const float MIN_PRICE;
+	static const float MAX_PRICE;
+
 private:
 	string event_name = "Default_event";
 	Location location; //initialized using the default ctor
@@ -69,47 +60,51 @@ private:
 	int** occupied_seats[Location::NR_ZONES] = { nullptr, nullptr };	//occupied seats matrix for both zones
 																		//1 - occupied, 0 - unoccupied
 																		//nr rows, nr columns are defined inside the Location class
+	float prices[Location::NR_ZONES] = { 0, 0 };
+
 public:
 	string getEventName();
-
 	Location getLocation();
-
 	char* getDescription();
-
 	int** getOccupiedSeatsForZone(int zone);
-
+	float getPriceForZone(int zone);
 	void setEventName(string name);
-
 	void setLocation(Location location);
-
 	void setDescription(const char* description);
-
 	void setSeatAsOccupiedInZone(int row, int col, int zone);
-
 	void resetOccupiedSeatsInZone(int zone);
-
+	void setPriceForZone(float price, int zone);
 	Event();
-
-	Event(string event_name, Location location);
-
-	Event(string event_name, Location location, const char* description);
-
+	Event(string event_name, Location location, float prices[Location::NR_ZONES ]);
+	Event(string event_name, Location location, const char* description, float prices[Location::NR_ZONES]);
 	Event(const Event& source);
-
 	~Event();
-
 	Event operator=(const Event& source);
 };
 
+const float Event::MAX_PRICE = 5000;
+const float Event::MIN_PRICE = 1;
+
 class Ticket {
 private:
-	string id = "default_id";
-	Event* event = nullptr;
+	const string id;
+	const char seat[4] = "A00";
+	float price = 0;
+	Event& event; //to be able to modify the occupied seats for the event
 	char* zone = nullptr;
-	char code = 'A';
-	float price[2] = { 0, 0 };
-	string seat = "Default_seat";
+	static string idGen(string*& existing_ids, int& nr_ids);
 public:
-	Ticket();
+	string getId();
+	char* getSeat();
+	float getPrice();
+	Event getEvent();
+	string getZone();
+	void setPrice(float price);
+	void setEvent(const Event& event);
+	void setZone(string zone);
+	void setSeat(const char* seat);
+	Ticket(string*& existing_ids, int& nr_ids, char* seat, float price, Event& event, char* zone);
+	Ticket(const Ticket& source);
+	Ticket operator=(const Ticket& source);
 	~Ticket();
 };

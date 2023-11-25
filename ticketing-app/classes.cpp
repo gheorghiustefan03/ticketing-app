@@ -1,6 +1,7 @@
 #include "Classes.h"
 #include <iostream>
 #include <string>
+#include <cstdlib>
 
 using namespace std;
 
@@ -11,6 +12,9 @@ using namespace std;
 		}
 	}
 	char* Location::getLocationName() {
+		if (this->location_name == nullptr) {
+			return nullptr;
+		}
 		char* nameCopy = new char[strlen(location_name) + 1];
 		strcpy_s(nameCopy, strlen(location_name) + 1, this->location_name);
 		return nameCopy;
@@ -97,12 +101,12 @@ using namespace std;
 		}
 	}
 	Location::~Location() {
-		if(location_name != nullptr)
+		if(this->location_name != nullptr)
 			delete[] location_name;
 	}
 	Location Location::operator=(const Location& source) {
 		if (this == &source) {
-			return;
+			return *this;
 		}
 		this->setLocationName(source.location_name);
 		for (int i = 0; i < Location::NR_ZONES; i++) {
@@ -132,6 +136,9 @@ using namespace std;
 		}
 		int nr_rows = this->location.getNrRowsForZone(zone);
 		int nr_cols = this->location.getSeatsPerRow(zone);
+		if (nr_cols == 0 || nr_rows == 0) {
+			return nullptr;
+		}
 		int** seatsCopy = new int*[nr_rows];
 		for (int i = 0; i < nr_rows; i++) {
 			seatsCopy[i] = new int[nr_cols];
@@ -142,6 +149,12 @@ using namespace std;
 			}
 		}
 		return seatsCopy;
+	}
+	float Event::getPriceForZone(int zone) {
+		if (zone != 1 && zone != 2) {
+			throw exception("Invalid zone");
+		}
+		return this->prices[zone - 1];
 	}
 	void Event::setEventName(string name) {
 		if (name.length() > Event::MAX_NAME_LEN || name.length() < Event::MIN_NAME_LEN) {
@@ -162,7 +175,7 @@ using namespace std;
 		if (this->occupied_seats[zone - 1] == nullptr) {
 			throw exception("Matrix uninitialized");
 		}
-		if (zone != 1 || zone != 2) {
+		if (zone != 1 && zone != 2) {
 			throw exception("Invalid zone");
 		}
 		if (row < Location::MIN_NR_ROWS || row > this->location.getNrRowsForZone(zone)) {
@@ -172,6 +185,15 @@ using namespace std;
 			throw exception("Invalid nr of columns");
 		}
 		this->occupied_seats[zone-1][row][col] = Event::OCCUPIED_SEAT;
+	}
+	void Event::setPriceForZone(float price, int zone) {
+		if (zone != 1 && zone != 2) {
+			throw exception("Invalid zone");
+		}
+		if (price > Event::MAX_PRICE || price < Event::MIN_PRICE) {
+			throw exception("Invalid price");
+		}
+		this->prices[zone - 1] = price;
 	}
 	void Event::resetOccupiedSeatsInZone(int zone) {
 		if (zone != 1 && zone != 2) {
@@ -195,19 +217,21 @@ using namespace std;
 	Event::Event(){
 
 	}
-	Event::Event(string event_name, Location location) {
+	Event::Event(string event_name, Location location, float prices[Location::NR_ZONES]) {
 		this->setEventName(event_name);
 		this->setLocation(location);
 		for (int i = 1; i <= Location::NR_ZONES; i++) {
 			this->resetOccupiedSeatsInZone(i);
+			this->setPriceForZone(prices[i - 1], i);
 		}
 	}
-	Event::Event(string event_name, Location location, const char* description) {
+	Event::Event(string event_name, Location location, const char* description, float prices[Location::NR_ZONES]) {
 		this->setEventName(event_name);
 		this->setLocation(location);
 		this->setDescription(description);
 		for (int i = 1; i <= Location::NR_ZONES; i++) {
 			this->resetOccupiedSeatsInZone(i);
+			this->setPriceForZone(prices[i - 1], i);
 		}
 	}
 	Event::Event(const Event& source) {
@@ -247,7 +271,7 @@ using namespace std;
 	}
 	Event Event::operator=(const Event& source) {
 		if (this == &source) {
-			return;
+			return *this;
 		}
 		for (int i = 0; i <= Location::NR_ZONES - 1; i++) {
 			if (this->occupied_seats[i] != nullptr) {
@@ -281,10 +305,96 @@ using namespace std;
 		}
 	}
 
-//Ticket class:
-	Ticket::Ticket() {
 
+//Ticket class:
+	string Ticket::idGen(string*& existing_ids, int& nr_ids) {
+		srand(time(NULL));
+		int id;
+		int ok = 1;
+		do
+		{
+			id = rand() % 10000;
+			for (int i = 0; i < nr_ids; i++) {
+				if (existing_ids[i] == to_string(id)) {
+					ok = 0;
+					break;
+				}
+			}
+		} while (!ok);
+		nr_ids++;
+		string* ids_copy = new string[nr_ids];
+		for (int i = 0; i < nr_ids - 1; i++) {
+			ids_copy[i] = existing_ids[i];
+		}
+		ids_copy[nr_ids - 1] = to_string(id);
+		delete[] existing_ids;
+		existing_ids = ids_copy;
+		return to_string(id);
+	}
+	string Ticket::getId() {
+		return this->id;
+	}
+	char* Ticket::getSeat() {
+		char seatCopy[4];
+		strcpy_s(seatCopy, 4, this->seat);
+		return seatCopy;
+	}
+	float Ticket::getPrice() {
+		return this->price;
+	}
+	Event Ticket::getEvent() {
+		float prices[2];
+		for (int i = 0; i < 2; i++) {
+			prices[i] = this->event.getPriceForZone(i + 1);
+		}
+		return Event(this->event.getEventName(), this->event.getLocation(), this->event.getDescription(), prices);
+	}
+	string Ticket::getZone() {
+		if (this->zone == nullptr) {
+			return "";
+		}
+		return string(this->zone);
+	}
+	void Ticket::setPrice(float price) {
+		if (price > Event::MAX_PRICE || price < Event::MIN_PRICE) {
+			throw exception("Price too large or too small");
+		}
+		this->price = price;
+	}
+	void Ticket::setEvent(const Event& event) {
+		this->event = event; //validation already done inside event class
+	}
+	void Ticket::setZone(string zone) {
+		if (this->zone != nullptr) {
+			delete[] this->zone;
+		}
+		this->zone = new char[zone.length() + 1];
+		strcpy_s(this->zone, zone.length() + 1, zone.c_str());
+	}
+	void Ticket::setSeat(const char* seat) {
+		if (strlen(seat) != 3) {
+			throw exception("Invalid seat");
+		}
+	}
+	Ticket::Ticket(string*& existing_ids, int& nr_ids, char* seat, float price, Event& event, char* zone)
+		:id(idGen(existing_ids, nr_ids)), event(event){
+		this->setPrice(price);
+		this->setZone(zone);
+		this->setSeat(seat);
+	}
+	Ticket::Ticket(const Ticket& source):id(source.id), event(source.event) {
+		this->setPrice(source.price);
+		this->setZone(source.zone);
+		this->setSeat(source.seat);
+	}
+	Ticket Ticket::operator=(const Ticket& source) {
+		this->setPrice(source.price);
+		this->setZone(source.zone);
+		this->setSeat(source.seat);
+		this->setEvent(source.event);
 	}
 	Ticket::~Ticket() {
-
+		if (this->zone != nullptr) {
+			delete[] this->zone;
+		}
 	}
