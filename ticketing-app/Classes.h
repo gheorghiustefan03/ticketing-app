@@ -24,6 +24,9 @@ private:
 	char code[Location::NR_ZONES] = { 'A', 'B' }; //user-defined alphabet character which will be used to distinguish between zones
 	static void checkZone(int zone);
 
+	static Location** locations;
+	static int nr_locations;
+
 public:
 	char* getLocationName();
 	string getZoneName(int zone);
@@ -35,6 +38,8 @@ public:
 	void setNrRowsForZone(int zone, int nr_rows);
 	void setSeatsPerRowForZone(int zone, int nr_seats);
 	void setCodeForZone(int zone, char code);
+	static Location** getAllLocations();
+	static int getNrLocations();
 	Location();
 	Location(string location_name, string zone_names[Location::NR_ZONES],
 		int nr_rows[Location::NR_ZONES], int seats_per_row[Location::NR_ZONES], char code[Location::NR_ZONES]);
@@ -43,6 +48,7 @@ public:
 	~Location();
 	Location operator=(const Location& source);
 };
+
 ostream& operator<<(ostream& console, Location loc);
 void operator>>(istream& console, Location& loc);
 
@@ -79,6 +85,7 @@ public:
 	void setSeatAsOccupiedInZone(int row, int col, int zone);
 	void resetOccupiedSeatsInZone(int zone);
 	void setPriceForZone(float price, int zone);
+	void freeSeatsMatrix(int zone);
 	Event();
 	Event(string event_name, Location location, float prices[Location::NR_ZONES ]);
 	Event(string event_name, Location location, string description, float prices[Location::NR_ZONES]);
@@ -87,8 +94,9 @@ public:
 	Event operator=(const Event& source);
 };
 ostream& operator<<(ostream& console, Event& event);
+void operator>>(istream& console, Event& event);
 
-/*
+
 class Ticket {
 public:
 	static const int SEAT_NAME_LEN = 6;
@@ -113,9 +121,5 @@ public:
 	Ticket operator=(const Ticket& source);
 	~Ticket();
 };
-
-string* Ticket::existing_ids = nullptr;
-int Ticket::nr_ids = 0;
-*/
 
 #endif

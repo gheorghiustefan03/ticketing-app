@@ -13,10 +13,10 @@ int main() {
 	cout << testLoc;
 	//cin >> testLoc;
 	//cout << testLoc;
-	string evName = "Event 1";
-	string evDesc = "Bowling match";
 	float prices[2] = { 6.2, 5.4 };
-	Event testEv("Event 1", testLoc, "Bowling match for orphans", prices);
-	//cout << testEv;
+	Event testEv("Event 1", testLoc, "Bowling match", prices);
+	cout << testEv;
+	cin >> testEv;
+	cout << testEv;
 	return 0;
 }

@@ -5,6 +5,9 @@
 
 using namespace std;
 
+Location** Location::locations = nullptr;
+int Location::nr_locations = 0;
+
 //Location class:
 	void Location::checkZone(int zone) {
 		if (zone != 1 && zone != 2) {
@@ -91,6 +94,21 @@ using namespace std;
 			this->setNrRowsForZone(i + 1, nr_rows[i]);
 			this->setSeatsPerRowForZone(i + 1, code[i]);
 		}
+		if (Location::locations == nullptr) {
+			Location::nr_locations += 1;
+			Location::locations = new Location*[Location::nr_locations];
+			locations[0] = this;
+		}
+		else {
+			Location** locationsCopy = new Location * [Location::nr_locations + 1];
+			for (int i = 0; i < Location::nr_locations; i++) {
+				locationsCopy[i] = Location::locations[i];
+			}
+			Location::nr_locations += 1;
+			locationsCopy[Location::nr_locations - 1] = this;
+			delete[] Location::locations;
+			Location::locations = locationsCopy;
+		}
 	}
 	Location::Location(string location_name, string zone_names[Location::NR_ZONES],
 		int nr_rows[Location::NR_ZONES], int seats_per_row[Location::NR_ZONES], char code[Location::NR_ZONES ]) {
@@ -101,6 +119,21 @@ using namespace std;
 			this->setSeatsPerRowForZone(i + 1, seats_per_row[i]);
 			this->setCodeForZone(i + 1, code[i]);
 		}
+		if (Location::locations == nullptr) {
+			Location::nr_locations += 1;
+			Location::locations = new Location * [Location::nr_locations];
+			locations[0] = this;
+		}
+		else {
+			Location** locationsCopy = new Location * [Location::nr_locations + 1];
+			for (int i = 0; i < Location::nr_locations; i++) {
+				locationsCopy[i] = Location::locations[i];
+			}
+			Location::nr_locations += 1;
+			locationsCopy[Location::nr_locations - 1] = this;
+			delete[] Location::locations;
+			Location::locations = locationsCopy;
+		}
 	}
 	Location::Location(const Location& source) {
 		this->setLocationName(source.location_name);
@@ -110,8 +143,24 @@ using namespace std;
 			this->setSeatsPerRowForZone(i + 1, source.seats_per_row[i]);
 			this->setCodeForZone(i + 1, source.code[i]);
 		}
+		Location** locationsCopy = new Location * [Location::nr_locations + 1];
+		for (int i = 0; i < Location::nr_locations; i++) {
+			locationsCopy[i] = Location::locations[i];
+		}
+		Location::nr_locations += 1;
+		locationsCopy[Location::nr_locations - 1] = this;
+		delete[] Location::locations;
+		Location::locations = locationsCopy;
 	}
 	Location::~Location() {
+		for (int i = 0; i < Location::nr_locations; i++) {
+			if (Location::locations[i] == this) {
+				for (int j = i; j < Location::nr_locations - 1; j++) {
+					Location::locations[j] = Location::locations[j + 1];
+				}
+				Location::nr_locations -= 1;
+			}
+		}
 		if(this->location_name != nullptr)
 			delete[] location_name;
 	}
@@ -126,6 +175,20 @@ using namespace std;
 			this->setSeatsPerRowForZone(i + 1, source.seats_per_row[i]);
 			this->setCodeForZone(i + 1, source.code[i]);
 		}
+		return *this;
+	}
+	Location** Location::getAllLocations() {
+		if (Location::locations == nullptr) {
+			return nullptr;
+		}
+		Location** locationsCopy = new Location*[Location::nr_locations];
+		for (int i = 0; i < nr_locations; i++) {
+			locationsCopy[i] = Location::locations[i];
+		}
+		return locationsCopy;
+	}
+	int Location::getNrLocations() {
+		return Location::nr_locations;
 	}
 
 	ostream& operator<<(ostream& console, Location loc) {
@@ -267,6 +330,10 @@ using namespace std;
 		if (description.length() > Event::MAX_DESC_LEN || description.length() < Event::MIN_DESC_LEN) {
 			throw exception("Description too large/too small");
 		}
+		if (this->description != nullptr) {
+			delete[] this->description;
+		}
+		this->description = new char[description.length() + 1];
 		strcpy_s(this->description, description.length() + 1, description.c_str());
 	}
 	void Event::setSeatAsOccupiedInZone(int row, int col, int zone) {
@@ -300,7 +367,7 @@ using namespace std;
 		int nr_rows = this->location.getNrRowsForZone(zone);
 		int nr_cols = this->location.getSeatsPerRow(zone);
 		zone -= 1;
-		if (this->occupied_seats[zone] == nullptr) {
+		if(this->occupied_seats[zone] == nullptr){
 			this->occupied_seats[zone] = new int* [nr_rows];
 			for (int i = 0; i < nr_rows; i++) {
 				this->occupied_seats[zone][i] = new int[nr_cols];
@@ -311,6 +378,16 @@ using namespace std;
 				this->occupied_seats[zone][i][j] = Event::FREE_SEAT;
 			}
 		}
+	}
+	void Event::freeSeatsMatrix(int zone) {
+		if (zone != 1 && zone != 2) {
+			throw exception("Invalid value for zone");
+		}
+		for (int i = 0; i < this->location.getNrRowsForZone(zone); i++) {
+			delete[] this->occupied_seats[zone - 1][i];
+		}
+		delete[] this->occupied_seats[zone - 1];
+		this->occupied_seats[zone - 1] = nullptr;
 	}
 	Event::Event(){
 
@@ -428,7 +505,83 @@ using namespace std;
 		}
 		return console;
 	}
-/*
+
+	void operator>>(istream& console, Event& event) {
+		int ok;
+		string evName;
+		do {
+			ok = 1;
+			try {
+				cout << endl << "Enter event name: ";
+				console >> evName;
+				event.setEventName(evName);
+			}
+			catch (exception e) {
+				cout << endl << "Error: " << e.what();
+				ok = 0;
+			}
+		} while (!ok);
+
+		Location** locations = Location::getAllLocations();
+		int choice;
+		do {
+			ok = 1;
+				cout << endl << "Choose from available locations (enter nr): " << endl;
+				for (int i = 0; i < Location::getNrLocations(); i++) {
+					cout << endl << i + 1 << ". " << locations[i]->getLocationName() << ",";
+				}
+				cout << endl;
+				console >> choice;
+				if (choice <= 0 || choice > Location::getNrLocations()) {
+					cout << endl << "Invalid choice.";
+					ok = 0;
+				}
+		} while (!ok);
+		event.freeSeatsMatrix(1);
+		event.freeSeatsMatrix(2);
+
+		event.setLocation(*(locations[choice - 1]));
+		event.resetOccupiedSeatsInZone(1);
+		event.resetOccupiedSeatsInZone(2);
+
+		delete[] locations;
+
+		string description;
+		do {
+			ok = 1;
+			cout << endl << "Enter event description: ";
+			console >> description;
+			try {
+				event.setDescription(description);
+			}
+			catch (exception e) {
+				cout << "Error: " << e.what();
+				ok = 0;
+			}
+		} while (!ok);
+
+		float price;
+		for (int i = 0; i < 2; i++) {
+			do {
+				console.clear();
+				console.ignore(10000, '\n');
+				ok = 1;
+				cout << endl << "Enter price for zone " << (event.getLocation()).getZoneName(i + 1) << ": ";
+				console >> price;
+				try {
+					event.setPriceForZone(price, i + 1);
+				}
+				catch (exception e) {
+					cout << "Error: " << e.what();
+					ok = 0;
+				}
+			} while (!ok);
+		}
+	}
+
+	string* Ticket::existing_ids = nullptr;
+	int Ticket::nr_ids = 0;
+
 //Ticket class:
 	string Ticket::idGen() {
 		srand(time(NULL));
@@ -507,7 +660,7 @@ using namespace std;
 		//the pointer* to the Event class will not be deleted, as the event should remain in the database even if a ticket for it is removed
 		//the pointer will never contain more than one event in this program, it is used just to be able to modify the available seats matrix for the Event
 	}
-	*/
+
 	//TO DO:
 	//each class contains at least 2 generic methods for processing/displaying the attributes 
 	//overload >> and << for each class
