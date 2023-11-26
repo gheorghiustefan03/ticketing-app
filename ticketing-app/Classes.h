@@ -86,6 +86,8 @@ public:
 	~Event();
 	Event operator=(const Event& source);
 };
+ostream& operator<<(ostream& console, Event& event);
+
 /*
 class Ticket {
 public:

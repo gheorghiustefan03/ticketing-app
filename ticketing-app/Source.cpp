@@ -5,14 +5,18 @@
 int main() {
 	
 	string zone_names[2] = { "zona 1", "zona 2" };
-	string name = "test";
 	int nr_rows[2] = { 50, 20 };
 	int seats_per_row[2] = { 20, 20 };
 	char codes[2] = { 'v', 'n' };
-	Location testLoc(name, zone_names, nr_rows, seats_per_row, codes);
+	Location testLoc("test", zone_names, nr_rows, seats_per_row, codes);
 
 	cout << testLoc;
-	cin >> testLoc;
-	cout << testLoc;
+	//cin >> testLoc;
+	//cout << testLoc;
+	string evName = "Event 1";
+	string evDesc = "Bowling match";
+	float prices[2] = { 6.2, 5.4 };
+	Event testEv("Event 1", testLoc, "Bowling match for orphans", prices);
+	//cout << testEv;
 	return 0;
 }

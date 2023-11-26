@@ -329,7 +329,7 @@ using namespace std;
 		this->setDescription(description);
 		for (int i = 1; i <= Location::NR_ZONES; i++) {
 			this->resetOccupiedSeatsInZone(i);
-			this->setPriceForZone(prices[i - 1], i);
+			this->setPriceForZone(prices[i-1], i);
 		}
 	}
 	Event::Event(const Event& source) {
@@ -402,7 +402,32 @@ using namespace std;
 			}
 		}
 	}
-
+	ostream& operator<<(ostream& console, Event& event) {
+		console << endl << "-------------------------";
+		console << endl << "Event name: " << event.getEventName();
+		console << endl << "Location info: ";
+		console << endl << event.getLocation();
+		console << endl << "Description: " << event.getDescription();
+		for (int i = 0; i < 2; i++) {
+			console << endl << "Occupied seats for zone " << (event.getLocation()).getZoneName(i + 1) << ": " << endl;
+			int** occupied_seats = event.getOccupiedSeatsForZone(i + 1);
+			for (int j = 0; j < (event.getLocation()).getNrRowsForZone(i + 1); j++) {
+				for (int k = 0; k < (event.getLocation()).getSeatsPerRow(i + 1); k++) {
+					console << (occupied_seats[j][k] == 1 ? '*' : '-');
+				}
+				console << '\n';
+			}
+			for (int j = 0; j < (event.getLocation()).getNrRowsForZone(i + 1); j++) {
+				delete[] occupied_seats[j];
+			}
+			delete[] occupied_seats;
+		}
+		for(int i = 0; i < 2; i++)
+		{
+			console << endl << "Price for zone " << (event.getLocation()).getZoneName(i + 1) << ": " << event.getPriceForZone(i + 1);
+		}
+		return console;
+	}
 /*
 //Ticket class:
 	string Ticket::idGen() {
