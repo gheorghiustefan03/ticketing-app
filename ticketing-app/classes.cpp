@@ -192,14 +192,14 @@ int Location::nr_locations = 0;
 	}
 
 	ostream& operator<<(ostream& console, Location loc) {
-		console << endl << "-------------------------";
 		console << endl << "Location name: " << loc.getLocationName();
 		for (int i = 0; i < Location::NR_ZONES; i++) {
-			console << endl << "Zone " << i + 1 << ": name: " << loc.getZoneName(i + 1);
+			console << endl << "Zone " << i + 1 << " name: " << loc.getZoneName(i + 1);
 			console << endl << "Nr rows: " << loc.getNrRowsForZone(i + 1);
 			console << endl << "Seats per row: " << loc.getSeatsPerRow(i + 1);
 			console << endl << "Code: " << loc.getZoneCode(i + 1);
 		}
+		console << endl;
 		return console;
 	}
 
@@ -480,11 +480,14 @@ int Location::nr_locations = 0;
 		}
 	}
 	ostream& operator<<(ostream& console, Event& event) {
-		console << endl << "-------------------------";
 		console << endl << "Event name: " << event.getEventName();
-		console << endl << "Location info: ";
-		console << endl << event.getLocation();
 		console << endl << "Description: " << event.getDescription();
+		for (int i = 0; i < 2; i++)
+		{
+			console << endl << "Price for zone " << (event.getLocation()).getZoneName(i + 1) << ": " << event.getPriceForZone(i + 1);
+		}
+		console << endl << "Location info: ";
+		console << event.getLocation();
 		for (int i = 0; i < 2; i++) {
 			console << endl << "Occupied seats for zone " << (event.getLocation()).getZoneName(i + 1) << ": " << endl;
 			int** occupied_seats = event.getOccupiedSeatsForZone(i + 1);
@@ -498,10 +501,6 @@ int Location::nr_locations = 0;
 				delete[] occupied_seats[j];
 			}
 			delete[] occupied_seats;
-		}
-		for(int i = 0; i < 2; i++)
-		{
-			console << endl << "Price for zone " << (event.getLocation()).getZoneName(i + 1) << ": " << event.getPriceForZone(i + 1);
 		}
 		return console;
 	}
