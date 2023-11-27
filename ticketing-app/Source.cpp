@@ -3,20 +3,17 @@
 #include "Classes.h"
 
 int main() {
-	
-	string zone_names[2] = { "zona 1", "zona 2" };
-	int nr_rows[2] = { 50, 20 };
-	int seats_per_row[2] = { 20, 20 };
-	char codes[2] = { 'v', 'n' };
-	Location testLoc("test", zone_names, nr_rows, seats_per_row, codes);
+	string location_zones[Location::NR_ZONES] = { "Zona test 1", "Zona test 2" };
+	int nr_rows_per_zone[Location::NR_ZONES] = { 50, 20 };
+	int nr_seats_per_row[Location::NR_ZONES] = { 10, 20 };
+	char codes[Location::NR_ZONES] = { 'K', 'L' };
+	Location testLoc("Locatie test", location_zones, nr_rows_per_zone, nr_seats_per_row, codes);
 
-	cout << testLoc;
-	//cin >> testLoc;
-	//cout << testLoc;
-	float prices[2] = { 6.2, 5.4 };
-	Event testEv("Event 1", testLoc, "Bowling match", prices);
-	cout << testEv;
-	cin >> testEv;
-	cout << testEv;
+	float prices[2] = { 8.8, 500.2 };
+	Event* testEv = new Event("Eveniment test", testLoc, prices, "Descriere test");
+
+	Ticket testTick(testEv, 1, 20, 1);
+
+	cout << testTick;
 	return 0;
 }
