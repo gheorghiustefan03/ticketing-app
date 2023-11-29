@@ -15,7 +15,7 @@ public:
 	static const int MIN_NR_ROWS = 2;
 	static const int MAX_NR_ROWS = 700;
 	static const int MIN_NR_SEATS = 5;
-	static const int MAX_NR_SEATS = 50;
+	static const int MAX_NR_SEATS = 45;
 	static const int NR_ZONES = 2;
 private:
 	static Location** LOCATIONS;
@@ -96,12 +96,15 @@ private:
 	float prices[Location::NR_ZONES] = { 0, 0 };
 
 	//generic functions:
-	void checkIfSeatInZone(int zone, int row, int col);
 public:
+	void checkIfRowInZone(int zone, int row);
+	void checkIfSeatInZone(int zone, int row, int col);
 	void resetOccupiedSeatsInZone(int zone);
 	void freeSeatsMatrix(int zone);
 	bool isFullZone(int zone);
 	bool isOccupied(int zone, int row, int col);
+	bool isFullRow(int zone, int row);
+	void printSeatsMap(int zone, ostream& console);
 
 	//getters:
 	string getEventName();
@@ -196,5 +199,4 @@ public:
 	Ticket operator=(const Ticket& source);
 };
 ostream& operator<<(ostream& console, Ticket ticket);
-//WORK IN PROGRESS:
-//void operator>>(istream& console, Ticket& ticket);
+void operator>>(istream& console, Ticket& ticket);

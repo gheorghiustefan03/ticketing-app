@@ -250,27 +250,31 @@ ostream& operator<<(ostream& console, Location loc) {
 void operator>>(istream& console, Location& loc) {
 	int ok;
 
+	string locationName;
 	do {
 		ok = 1;
 		cout << endl << "Enter location name: ";
-		string locationName;
-		console >> locationName;
+		getline(console, locationName);
 		try {
 			loc.setLocationName(locationName);
 		}
 		catch (exception e) {
 			cout << endl << "Error: " << e.what();
 			ok = 0;
+			console.clear();
+			console.ignore(10000, '\n');
 		}
 	} while (!ok);
 
 	for (int i = 0; i < Location::NR_ZONES; i++) {
 
 		do {
+			console.clear();
+			console.ignore(10000, '\n');
 			ok = 1;
 			cout << endl << "Enter name for zone " << i + 1 << ": ";
 			string name;
-			console >> name;
+			getline(console, name);
 			try {
 				loc.setZoneName(i + 1, name);
 			}
@@ -279,11 +283,12 @@ void operator>>(istream& console, Location& loc) {
 				ok = 0;
 			}
 		} while (!ok);
-
+		int nrRows;
 		do {
+			console.clear();
+			console.ignore(10000, '\n');
 			ok = 1;
 			cout << endl << "Enter nr of rows for zone " << i + 1 << ": ";
-			int nrRows;
 			console >> nrRows;
 			try {
 				loc.setNrRowsForZone(i + 1, nrRows);
@@ -293,11 +298,12 @@ void operator>>(istream& console, Location& loc) {
 				ok = 0;
 			}
 		} while (!ok);
-
+		int seatsPerRow;
 		do {
+			console.clear();
+			console.ignore(10000, '\n');
 			ok = 1;
 			cout << endl << "Enter seats per row for zone " << i + 1 << ": ";
-			int seatsPerRow;
 			console >> seatsPerRow;
 			try {
 				loc.setSeatsPerRowForZone(i + 1, seatsPerRow);
@@ -308,10 +314,12 @@ void operator>>(istream& console, Location& loc) {
 			}
 		} while (!ok);
 
+		char code;
 		do {
+			console.clear();
+			console.ignore(10000, '\n');
 			ok = 1;
 			cout << endl << "Enter code for zone " << i + 1 << ": ";
-			char code;
 			console >> code;
 			try {
 				loc.setCodeForZone(i + 1, code);
@@ -323,7 +331,8 @@ void operator>>(istream& console, Location& loc) {
 		} while (!ok);
 
 	}
-
+	console.clear();
+	console.ignore(10000, '\n');
 }
 /*******\LOCATION CLASS*******/
 
@@ -331,12 +340,8 @@ void operator>>(istream& console, Location& loc) {
 
 /*******EVENT CLASS*******/
 
-//Initializing static attributes:
-
-
 //Generic functions:
-
-void Event::checkIfSeatInZone(int zone, int row, int col) {
+void Event::checkIfRowInZone(int zone, int row) {
 	Location::checkZone(zone);
 	if (this->occupiedSeats[zone - 1] == nullptr) {
 		throw exception("Matrix uninitialized");
@@ -344,6 +349,10 @@ void Event::checkIfSeatInZone(int zone, int row, int col) {
 	if (row > (this->location).getNrRowsForZone(zone) || row - 1 < 0) {
 		throw exception("Invalid row");
 	}
+}
+
+void Event::checkIfSeatInZone(int zone, int row, int col) {
+	this->checkIfRowInZone(zone, row);
 	if (col > (this->location).getSeatsPerRow(zone) || col - 1 < 0) {
 		throw exception("Invalid column");
 	}
@@ -415,9 +424,45 @@ bool Event::isFullZone(int zone) {
 
 bool Event::isOccupied(int zone, int row, int col) {
 	this->checkIfSeatInZone(zone, row, col);
-	return (this->occupiedSeats[zone - 1][row][col] == 1);
+	return (this->occupiedSeats[zone - 1][row-1][col-1] == 1);
 }
 
+bool Event::isFullRow(int zone, int row) {
+	this->checkIfRowInZone(zone, row);
+	bool full = true;
+	for (int i = 0; i < this->location.getSeatsPerRow(zone); i++) {
+		if (this->occupiedSeats[zone-1][row-1][i] == 0) {
+			full = false;
+			break;
+		}
+	}
+	return full;
+}
+
+void Event::printSeatsMap(int zone, ostream& console) {
+	Location::checkZone(zone);
+	int nr_rows = this->location.getNrRowsForZone(zone);
+	int nr_cols = this->location.getSeatsPerRow(zone);
+	string spaces;
+	for (int i = 0; i < nr_rows; i++) {
+		switch (count_digit(i + 1)) {
+		case 1:
+			spaces = "    ";
+			break;
+		case 2:
+			spaces = "   ";
+			break;
+		case 3:
+			spaces = "  ";
+			break;
+		}
+		console << i + 1 << spaces;
+		for (int j = 0; j < nr_cols; j++) {
+			console << (this->occupiedSeats[zone - 1][i][j] == 0 ? '-' : '*') << " ";
+		}
+		console << "\n";
+	}
+}
 
 //Getters:
 string Event::getEventName() {
@@ -550,6 +595,8 @@ Event::Event(const Event& source) {
 	for (int i = 0; i < Location::NR_ZONES; i++) {
 		nrRows = this->location.getNrRowsForZone(i + 1);
 		nrCols = this->location.getSeatsPerRow(i + 1);
+		this->setPriceForZone(source.prices[i], i + 1);
+		this->setPriceForZone(source.prices[i], i + 1);
 		this->occupiedSeats[i] = new int* [nrRows];
 
 		for (int j = 0; j < nrRows; j++) {
@@ -644,27 +691,12 @@ ostream& operator<<(ostream& console, Event event) {
 	for (int i = 0; i < Location::NR_ZONES; i++){
 		console << endl << "Price for zone " << (event.getLocation()).getZoneName(i + 1) << ": " << event.getPriceForZone(i + 1);
 	}
-
-	console << endl << "Location info: ";
-	console << event.getLocation();
+	char* name = event.getLocation().getLocationName();
+	console << endl << "Location info: " << name;
+	delete[] name;
 	for (int i = 0; i < Location::NR_ZONES; i++) {
 		console << endl << "Occupied seats for zone " << (event.getLocation()).getZoneName(i + 1) << ": " << endl;
-		int** occupiedSeats = event.getOccupiedSeatsForZone(i + 1);
-
-		for (int j = 0; j < (event.getLocation()).getNrRowsForZone(i + 1); j++) {
-
-			for (int k = 0; k < (event.getLocation()).getSeatsPerRow(i + 1); k++) {
-				console << (occupiedSeats[j][k] == 1 ? '*' : '-');
-			}
-
-			console << '\n';
-		}
-
-		for (int j = 0; j < (event.getLocation()).getNrRowsForZone(i + 1); j++) {
-			delete[] occupiedSeats[j];
-		}
-
-		delete[] occupiedSeats;
+		event.printSeatsMap(i + 1, console);
 	}
 
 	return console;
@@ -678,12 +710,14 @@ void operator>>(istream& console, Event& event) {
 		ok = 1;
 		try {
 			cout << endl << "Enter event name: ";
-			console >> evName;
+			getline(console, evName);
 			event.setEventName(evName);
 		}
 		catch (exception e) {
 			cout << endl << "Error: " << e.what();
 			ok = 0;
+			console.clear();
+			console.ignore(10000, '\n');
 		}
 	} while (!ok);
 
@@ -701,6 +735,8 @@ void operator>>(istream& console, Event& event) {
 				delete[] locName;
 			}
 
+			console.clear();
+			console.ignore(10000, '\n');
 			cout << endl;
 			console >> choice;
 			if (choice <= 0 || choice > Location::getNrLocations()) {
@@ -724,8 +760,10 @@ void operator>>(istream& console, Event& event) {
 
 	do {
 		ok = 1;
+		console.clear();
+		console.ignore(10000, '\n');
 		cout << endl << "Enter event description: ";
-		console >> description;
+		getline(console, description);
 		try {
 			event.setDescription(description);
 		}
@@ -755,7 +793,8 @@ void operator>>(istream& console, Event& event) {
 		} while (!ok);
 
 	}
-
+	console.clear();
+	console.ignore(10000, '\n');
 }
 
 /*******\EVENT CLASS*******/
@@ -907,8 +946,8 @@ void Ticket::setZoneAndSeat(int zone, int row, int rowSeat, bool isCopy) {
 	if (this->event->isOccupied(zone, row, rowSeat) && !isCopy) {
 		throw exception("Trying to switch to occupied seat");
 	}
-	if (zone != -1) {
-		this->event->freeSeatInZone(row, rowSeat, zone);
+	if (this->zone != -1) {
+		this->event->freeSeatInZone(this->row, this->rowSeat, this->zone);
 	}
 	this->event->setSeatAsOccupiedInZone(row, rowSeat, zone);
 	this->zone = zone;
@@ -926,6 +965,11 @@ void Ticket::setPrice(float price) {
 void Ticket::setSeatCode(string seat) {
 	if (seat.length() != Ticket::SEAT_CODE_LEN) {
 		throw exception("Seat code must contain 6 characters");
+	}
+	for (int i = 0; i < seat.length(); i++) {
+		if (isalpha(seat[i])) {
+			seat[i] = toupper(seat[i]);
+		}
 	}
 	strcpy_s(this->seat, Ticket::SEAT_CODE_LEN + 1, seat.c_str());
 }
@@ -1001,20 +1045,20 @@ Ticket Ticket::operator=(const Ticket& source) {
 
 ostream& operator<<(ostream& console, Ticket ticket) {
 	console << endl << "Ticket ID: " << ticket.getId();
-	console << endl << "Event Info: ";
-	console << ticket.getEvent();
+	console << endl << "Event Name: " << ticket.getEvent().getEventName();
 	console << endl << "Zone: " << ticket.getEvent().getLocation().getZoneName(ticket.getZone());
 	console << endl << "Row: " << ticket.getRow();
 	console << endl << "Row seat: " << ticket.getRowSeat();
 	console << endl << "Price: " << ticket.getPrice();
-	console << endl << "Seat code: " << ticket.getSeat();
+	char* seat = ticket.getSeat();
+	console << endl << "Seat code: " << seat << endl;
+	delete[] seat;
 
 	return console;
 }
 
-//WORK IN PROGRESS:
-/*
 void operator>>(istream& console, Ticket& ticket) {
+	int ok;
 	if (ticket.getEvent().isFullZone(1) && ticket.getEvent().isFullZone(2)) {
 		cout << endl << "No other free seats available for this ticket's event, you may only modify the price and seat code if you wish.";
 	}
@@ -1024,42 +1068,118 @@ void operator>>(istream& console, Ticket& ticket) {
 		for (int i = 0; i < Location::NR_ZONES; i++) {
 			cout << endl << i + 1 << ". " << ticket.getEvent().getLocation().getZoneName(i + 1) << " - price: " << ticket.getEvent().getPriceForZone(i + 1);
 		}
-		int ok;
 		int zone;
 
 		do {
 			cout << endl << "Choose zone (enter nr): ";
 			ok = 1;
+			console >> zone;
 			try {
-				console >> zone;
 				Location::checkZone(zone);
 			}
 			catch (exception e) {
 				cout << "Error: " << e.what();
 				ok = 0;
+				console.clear();
+				console.ignore(10000, '\n');
 			}
 		} while (!ok);
 
-		cout << endl << "Seats for zone " << ticket.getEvent().getLocation().getZoneName(zone) << ": ";
-		int** occupiedSeats = ticket.getEvent().getOccupiedSeatsForZone(zone);
-
-		for (int i = 0; i < ticket.getEvent().getLocation().getNrRowsForZone(i + 1); i++) {
-
-			for (int j = 0; j < ticket.getEvent().getLocation().getSeatsPerRow(i + 1); j++) {
-				cout << (occupiedSeats[i][j] == 1 ? '*' : '-');
-			}
-
-			cout << '\n';
-		}
-
-		for (int i = 0; i < ticket.getEvent().getLocation().getNrRowsForZone(i + 1); i++) {
-			delete[] occupiedSeats[i];
-		}
-
-		delete[] occupiedSeats;
+		cout << endl << "Seats for zone " << ticket.getEvent().getLocation().getZoneName(zone) << ": " << endl;
+		ticket.getEvent().printSeatsMap(zone, cout);
+		int row, seat;
 
 		do {
+			console.clear();
+			console.ignore(10000, '\n');
+			cout << endl << "Choose your row: ";
 			ok = 1;
+			console >> row;
+			cout << endl << (row > ticket.getEvent().getLocation().getNrRowsForZone(zone)) << (row - 1 < 0) << ticket.getEvent().isFullRow(zone, row);
+			if (row > ticket.getEvent().getLocation().getNrRowsForZone(zone) || row - 1 < 0 || ticket.getEvent().isFullRow(zone, row)) {
+				cout << "Invalid row, please try again";
+				ok = 0;
+			}
+		} while (!ok);
+
+		int** seatsMap = ticket.getEvent().getOccupiedSeatsForZone(zone);
+		do {
+			console.clear();
+			console.ignore(10000, '\n');
+			cout << endl << "Choose your seat: " << endl;
+			for (int i = 0; i < ticket.getEvent().getLocation().getSeatsPerRow(zone); i++) {
+				cout << i + 1 << (count_digit(i + 1) == 1 ? "  " : " ");
+			}
+			cout << endl;
+			for (int i = 0; i < ticket.getEvent().getLocation().getSeatsPerRow(zone); i++) {
+				cout << (seatsMap[row - 1][i] == 0 ? '-' : '*') << "  ";
+			}
+			ok = 1;
+			console >> seat;
+			try {
+				ticket.getEvent().checkIfSeatInZone(zone, row, seat);
+			}
+			catch (exception e) {
+				cout << endl << "Error: " << e.what();
+				ok = 0;
+				continue;
+			}
+			if (ticket.getEvent().isOccupied(zone, row, seat)) {
+				cout << endl << "Occupied seat, please try again ";
+				ok = 0;
+			}
+		} while (!ok);
+
+		delete[] seatsMap;
+
+		ticket.setZoneAndSeat(zone, row, seat, false);
+		ticket.updatePriceAndSeat();
+	}
+	char answer;
+	do {
+		console.clear();
+		console.ignore(10000, '\n');
+		cout << endl << "Would you like to manually update seat code and price?(y/n) ";
+		console >> answer;
+		answer = toupper(answer);
+		if (answer != 'Y' && answer != 'N') {
+			cout << endl << "Please enter a valid answer";
+		}
+	} while (answer != 'Y' && answer != 'N');
+
+	if (answer == 'Y') {
+		float price;
+		do {
+			ok = 1;
+			cout << endl << "Enter price: ";
+			console.clear();
+			console.ignore(10000, '\n');
+			console >> price;
+			try {
+				ticket.setPrice(price);
+			}
+			catch (exception e) {
+				cout << endl << "Error: " << e.what();
+				ok = 0;
+			}
+		} while (!ok);
+		string code;
+		do {
+			ok = 1;
+			cout << endl << "Enter new code: ";
+			console.clear();
+			console.ignore(10000, '\n');
+			getline(console, code);
+			try {
+				ticket.setSeatCode(code);
+			}
+			catch (exception e) {
+				cout << endl << "Error: " << e.what();
+				ok = 0;
+			}
 		} while (!ok);
 	}
-}*/
+
+	console.clear();
+	console.ignore(10000, '\n');
+}
