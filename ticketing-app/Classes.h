@@ -53,6 +53,7 @@ public:
 
 	//constructors:
 	Location(); //default constructor
+	Location(bool isContained);
 	//constructors with parameters:
 	Location(string locationName, string zoneNames[Location::NR_ZONES],
 		int nrRows[Location::NR_ZONES], int seatsPerRow[Location::NR_ZONES], char code[Location::NR_ZONES]);
