@@ -149,7 +149,7 @@ void Location::setCodeForZone(int zone, char code) {
 
 //Constructors:
 Location::Location() { //Default constructor
-
+	Location::updateLocationsArr(this);
 }
 
 //Constructors with parameters:
