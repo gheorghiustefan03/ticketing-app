@@ -151,7 +151,7 @@ void Location::setCodeForZone(int zone, char code) {
 Location::Location() { //Default constructor
 }
 
-Location::Location(bool isContained) { //Default constructor
+Location::Location(bool isContained) {
 	if (!isContained) {
 		Location::updateLocationsArr(this);
 	}
