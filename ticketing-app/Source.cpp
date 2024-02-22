@@ -1,6 +1,32 @@
 #include <iostream>
 #include <string>
 #include "Classes.h"
+/*
+int main() {
+	string location_zones[Location::NR_ZONES] = { "Zona test 1", "Zona test 2" };
+	int nr_rows_per_zone[Location::NR_ZONES] = { 20, 20 };
+	int nr_seats_per_row[Location::NR_ZONES] = { 10, 20 };
+	char codes[Location::NR_ZONES] = { 'K', 'L' };
+	Location testLoc("Locatie test", location_zones, nr_rows_per_zone, nr_seats_per_row, codes);
+
+	float prices[2] = { 8.8, 500.2 };
+	Event testEv("Eveniment test", testLoc, prices, "Descriere test");
+
+	Ticket testTick(&testEv, 1, 20, 1);
+
+	cout << testLoc;
+	cout << testEv;
+	cout << testTick;
+
+	//cin >> testTick;
+	//cin >> testLoc;
+	cin >> testEv;
+
+	cout << testTick;
+
+	return 0;
+}
+*/
 
 using namespace std;
 
@@ -134,12 +160,13 @@ int main() {
 						cout << "No events in database";
 					}
 					else {
-						Ticket addedTicket;
+						Ticket* addedTicket = new Ticket;
 						cin.clear();
 						cin.ignore(10000, '\n');
-						cin >> addedTicket;
-						addTicket(addedTicket, &tickets, nrTickets);
+						cin >> *addedTicket;
+						addTicket(*addedTicket, &tickets, nrTickets);
 						nrTickets++;
+						delete addedTicket;
 					}
 					break;
 				case 3:
@@ -297,11 +324,11 @@ int main() {
 			}
 			break;
 		case 2:
+			for (int i = 0; i < nrEvents; i++) {
+				cout << endl << i << " " << events[i];
+			}
 			while (true) {
 				system("cls");
-				for (int i = 0; i < nrEvents; i++) {
-					cout << endl << i << " " << events[i];
-				}
 				cout << endl << endl << "1. Remove event";
 				cout << endl << "2. Add event";
 				cout << endl << "3. Go back";
@@ -328,12 +355,13 @@ int main() {
 						cout << "No locations in database";
 					}
 					else {
-						Event addedEvent;
+						Event* addedEvent = new Event;
 						cin.clear();
 						cin.ignore(10000, '\n');
-						cin >> addedEvent;
-						addEvent(addedEvent, &events, nrEvents);
+						cin >> *addedEvent;
+						addEvent(*addedEvent, &events, nrEvents);
 						nrEvents += 1;
+						delete addedEvent;
 					}
 					break;
 				}
@@ -375,7 +403,7 @@ int main() {
 					choice = 0;
 					break;
 				case 2:
-					Location addedLocation(false);
+					Location addedLocation;
 					cin.clear();
 					cin.ignore(10000, '\n');
 					cin >> addedLocation;

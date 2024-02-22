@@ -149,12 +149,7 @@ void Location::setCodeForZone(int zone, char code) {
 
 //Constructors:
 Location::Location() { //Default constructor
-}
-
-Location::Location(bool isContained) { //Default constructor
-	if (!isContained) {
-		Location::updateLocationsArr(this);
-	}
+	Location::updateLocationsArr(this);
 }
 
 //Constructors with parameters:
@@ -556,7 +551,7 @@ void Event::freeSeatInZone(int row, int col, int zone) {
 
 
 //Constructors:
-Event::Event():location(true){ //Default constructor
+Event::Event(){ //Default constructor
 
 }
 
