@@ -1,2 +1,1 @@
-Classes for an University OOP project.
-App functionality not yet implemented.
+University OOP project - ticketing application. Only has create/read capabilities and no persistent storage. Its' purpose was learning about and using OOP principles.
