@@ -90,7 +90,7 @@ private:
 
 	//class attributes:
 	string eventName = "Default_event";
-	Location location;
+	Location* location = nullptr;
 	char* description = nullptr;
 	int** occupiedSeats[Location::NR_ZONES] = { nullptr, nullptr };
 	float prices[Location::NR_ZONES] = { 0, 0 };
@@ -115,7 +115,7 @@ public:
 
 	//setters:
 	void setEventName(string name);
-	void setLocation(Location location);
+	void setLocation(Location* location);
 	void setDescription(string description);
 	void setSeatAsOccupiedInZone(int row, int col, int zone);
 	void setPriceForZone(float price, int zone);
@@ -124,8 +124,8 @@ public:
 	//constructors:
 	Event(); //default constructor
 	//constructors with parameters:
-	Event(string eventName, Location location, float prices[Location::NR_ZONES], string description);
-	Event(string eventName, Location location, float prices[Location::NR_ZONES ]);
+	Event(string eventName, Location* location, float prices[Location::NR_ZONES], string description);
+	Event(string eventName, Location* location, float prices[Location::NR_ZONES ]);
 	//copy constructor:
 	Event(const Event& source);
 	//destructor:
@@ -169,7 +169,7 @@ public:
 
 	//getters:
 	int getId();
-	Event getEvent();
+	Event* getEvent();
 	int getZone();
 	int getRow();
 	int getRowSeat();
@@ -188,6 +188,7 @@ public:
 	//constructors:
 	Ticket(); //default constructor
 	//constructors with parameters:
+	Ticket(Event* event);
 	Ticket(Event* event, int zone, int row, int rowSeat, float price, string seat);
 	Ticket(Event* event, int zone, int row, int rowSeat);
 	//copy constructor:

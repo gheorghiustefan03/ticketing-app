@@ -31,7 +31,6 @@ void Location::updateLocationsArr(Location* value) {
 	}
 	else {
 		Location** locationsCopy = new Location * [Location::NR_LOCATIONS + 1];
-
 		for (int i = 0; i < Location::NR_LOCATIONS; i++) {
 			locationsCopy[i] = Location::LOCATIONS[i];
 		}
@@ -149,7 +148,7 @@ void Location::setCodeForZone(int zone, char code) {
 
 //Constructors:
 Location::Location() { //Default constructor
-
+	Location::updateLocationsArr(this);
 }
 
 //Constructors with parameters:
@@ -346,14 +345,14 @@ void Event::checkIfRowInZone(int zone, int row) {
 	if (this->occupiedSeats[zone - 1] == nullptr) {
 		throw exception("Matrix uninitialized");
 	}
-	if (row > (this->location).getNrRowsForZone(zone) || row - 1 < 0) {
+	if (row > (this->location)->getNrRowsForZone(zone) || row - 1 < 0) {
 		throw exception("Invalid row");
 	}
 }
 
 void Event::checkIfSeatInZone(int zone, int row, int col) {
 	this->checkIfRowInZone(zone, row);
-	if (col > (this->location).getSeatsPerRow(zone) || col - 1 < 0) {
+	if (col > (this->location)->getSeatsPerRow(zone) || col - 1 < 0) {
 		throw exception("Invalid column");
 	}
 
@@ -361,8 +360,8 @@ void Event::checkIfSeatInZone(int zone, int row, int col) {
 
 void Event::resetOccupiedSeatsInZone(int zone) {
 	Location::checkZone(zone);
-	int nrRows = this->location.getNrRowsForZone(zone);
-	int nrCols = this->location.getSeatsPerRow(zone);
+	int nrRows = this->location->getNrRowsForZone(zone);
+	int nrCols = this->location->getSeatsPerRow(zone);
 	if (this->occupiedSeats[zone - 1] == nullptr) {
 		this->occupiedSeats[zone - 1] = new int* [nrRows];
 
@@ -389,7 +388,7 @@ void Event::freeSeatsMatrix(int zone) {
 		return;
 	}
 
-	for (int i = 0; i < this->location.getNrRowsForZone(zone); i++) {
+	for (int i = 0; i < this->location->getNrRowsForZone(zone); i++) {
 		delete[] this->occupiedSeats[zone - 1][i];
 	}
 
@@ -405,9 +404,9 @@ bool Event::isFullZone(int zone) {
 		return full;
 	}
 
-	for (int i = 0; i < (this->location).getNrRowsForZone(zone); i++) {
+	for (int i = 0; i < (this->location)->getNrRowsForZone(zone); i++) {
 
-		for (int j = 0; j < (this->location).getSeatsPerRow(zone); j++) {
+		for (int j = 0; j < (this->location)->getSeatsPerRow(zone); j++) {
 			if (this->occupiedSeats[zone - 1][i][j] == 0) {
 				full = false;
 				break;
@@ -430,7 +429,7 @@ bool Event::isOccupied(int zone, int row, int col) {
 bool Event::isFullRow(int zone, int row) {
 	this->checkIfRowInZone(zone, row);
 	bool full = true;
-	for (int i = 0; i < this->location.getSeatsPerRow(zone); i++) {
+	for (int i = 0; i < this->location->getSeatsPerRow(zone); i++) {
 		if (this->occupiedSeats[zone-1][row-1][i] == 0) {
 			full = false;
 			break;
@@ -441,8 +440,8 @@ bool Event::isFullRow(int zone, int row) {
 
 void Event::printSeatsMap(int zone, ostream& console) {
 	Location::checkZone(zone);
-	int nr_rows = this->location.getNrRowsForZone(zone);
-	int nr_cols = this->location.getSeatsPerRow(zone);
+	int nr_rows = this->location->getNrRowsForZone(zone);
+	int nr_cols = this->location->getSeatsPerRow(zone);
 	string spaces;
 	for (int i = 0; i < nr_rows; i++) {
 		switch (count_digit(i + 1)) {
@@ -470,7 +469,7 @@ string Event::getEventName() {
 }
 
 Location Event::getLocation() {
-	return this->location;
+	return *(this->location);
 }
 
 char* Event::getDescription() {
@@ -481,8 +480,8 @@ char* Event::getDescription() {
 
 int** Event::getOccupiedSeatsForZone(int zone) {
 	Location::checkZone(zone);
-	int nrRows = this->location.getNrRowsForZone(zone);
-	int nrCols = this->location.getSeatsPerRow(zone);
+	int nrRows = this->location->getNrRowsForZone(zone);
+	int nrCols = this->location->getSeatsPerRow(zone);
 	if (nrCols == 0 || nrRows == 0) {
 		return nullptr;
 	}
@@ -516,7 +515,7 @@ void Event::setEventName(string name) {
 	this->eventName = name;
 }
 
-void Event::setLocation(Location location) {
+void Event::setLocation(Location* location) {
 	this->location = location;
 }
 
@@ -556,7 +555,7 @@ Event::Event(){ //Default constructor
 }
 
 //Constructors with parameters:
-Event::Event(string event_name, Location location, float prices[Location::NR_ZONES], string description) {
+Event::Event(string event_name, Location* location, float prices[Location::NR_ZONES], string description) {
 	this->setEventName(event_name);
 	this->setLocation(location);
 	this->setDescription(description);
@@ -568,7 +567,7 @@ Event::Event(string event_name, Location location, float prices[Location::NR_ZON
 
 }
 
-Event::Event(string event_name, Location location, float prices[Location::NR_ZONES]) {
+Event::Event(string event_name, Location* location, float prices[Location::NR_ZONES]) {
 	this->setEventName(event_name);
 	this->setLocation(location);
 
@@ -593,8 +592,8 @@ Event::Event(const Event& source) {
 	int nrCols;
 
 	for (int i = 0; i < Location::NR_ZONES; i++) {
-		nrRows = this->location.getNrRowsForZone(i + 1);
-		nrCols = this->location.getSeatsPerRow(i + 1);
+		nrRows = this->location->getNrRowsForZone(i + 1);
+		nrCols = this->location->getSeatsPerRow(i + 1);
 		this->setPriceForZone(source.prices[i], i + 1);
 		this->setPriceForZone(source.prices[i], i + 1);
 		this->occupiedSeats[i] = new int* [nrRows];
@@ -606,8 +605,8 @@ Event::Event(const Event& source) {
 	}
 
 	for (int i = 0; i < Location::NR_ZONES; i++) {
-		nrRows = this->location.getNrRowsForZone(i + 1);
-		nrCols = this->location.getSeatsPerRow(i + 1);
+		nrRows = this->location->getNrRowsForZone(i + 1);
+		nrCols = this->location->getSeatsPerRow(i + 1);
 
 		for (int j = 0; j < nrRows; j++) {
 
@@ -626,7 +625,7 @@ Event::~Event() {
 
 	for (int i = 0; i < Location::NR_ZONES; i++) {
 		if (this->occupiedSeats[i] != nullptr) {
-			int nrRows = this->location.getNrRowsForZone(i + 1);
+			int nrRows = this->location->getNrRowsForZone(i + 1);
 
 			for (int j = 0; j < nrRows; j++) {
 				delete[] this->occupiedSeats[i][j];
@@ -655,8 +654,8 @@ Event Event::operator=(const Event& source) {
 	int nrCols;
 
 	for (int i = 0; i < Location::NR_ZONES; i++) {
-		nrRows = this->location.getNrRowsForZone(i + 1);
-		nrCols = this->location.getSeatsPerRow(i + 1);
+		nrRows = this->location->getNrRowsForZone(i + 1);
+		nrCols = this->location->getSeatsPerRow(i + 1);
 		this->occupiedSeats[i] = new int* [nrRows];
 
 		for (int j = 0; j < nrRows; j++) {
@@ -666,8 +665,8 @@ Event Event::operator=(const Event& source) {
 	}
 
 	for (int i = 0; i < Location::NR_ZONES; i++) {
-		nrRows = this->location.getNrRowsForZone(i + 1);
-		nrCols = this->location.getSeatsPerRow(i + 1);
+		nrRows = this->location->getNrRowsForZone(i + 1);
+		nrCols = this->location->getSeatsPerRow(i + 1);
 
 		for (int j = 0; j < nrRows; j++) {
 
@@ -749,7 +748,7 @@ void operator>>(istream& console, Event& event) {
 		event.freeSeatsMatrix(i + 1);
 	}
 
-	event.setLocation(*(locations[choice - 1]));
+	event.setLocation((locations[choice - 1]));
 
 	for (int i = 0; i < Location::NR_ZONES; i++) {
 		event.resetOccupiedSeatsInZone(i + 1);
@@ -896,8 +895,8 @@ int Ticket:: getId() {
 	return this->id;
 }
 
-Event Ticket::getEvent() {
-	return *(this->event);
+Event* Ticket::getEvent() {
+	return (this->event);
 }
 
 int Ticket::getZone() {
@@ -980,6 +979,12 @@ Ticket::Ticket():id(0) { //Default constructor;
 
 }
 
+Ticket::Ticket(Event* event) :id(Ticket::idGen()) {
+	this->setEvent(event);
+
+	Ticket:updateExistingIds(this->id);
+}
+
 //Constructors with parameters:
 Ticket::Ticket(Event* event, int zone, int row, int rowSeat, float price, string seat):id(Ticket::idGen()) {
 	this->setEvent(event);
@@ -1045,8 +1050,8 @@ Ticket Ticket::operator=(const Ticket& source) {
 
 ostream& operator<<(ostream& console, Ticket ticket) {
 	console << endl << "Ticket ID: " << ticket.getId();
-	console << endl << "Event Name: " << ticket.getEvent().getEventName();
-	console << endl << "Zone: " << ticket.getEvent().getLocation().getZoneName(ticket.getZone());
+	console << endl << "Event Name: " << ticket.getEvent()->getEventName();
+	console << endl << "Zone: " << ticket.getEvent()->getLocation().getZoneName(ticket.getZone());
 	console << endl << "Row: " << ticket.getRow();
 	console << endl << "Row seat: " << ticket.getRowSeat();
 	console << endl << "Price: " << ticket.getPrice();
@@ -1059,14 +1064,14 @@ ostream& operator<<(ostream& console, Ticket ticket) {
 
 void operator>>(istream& console, Ticket& ticket) {
 	int ok;
-	if (ticket.getEvent().isFullZone(1) && ticket.getEvent().isFullZone(2)) {
+	if (ticket.getEvent()->isFullZone(1) && ticket.getEvent()->isFullZone(2)) {
 		cout << endl << "No other free seats available for this ticket's event, you may only modify the price and seat code if you wish.";
 	}
 	else{
 		cout << endl << "Enter new information for ticket " << ticket.getId() << ": ";
 		cout << endl << "Zones: ";
 		for (int i = 0; i < Location::NR_ZONES; i++) {
-			cout << endl << i + 1 << ". " << ticket.getEvent().getLocation().getZoneName(i + 1) << " - price: " << ticket.getEvent().getPriceForZone(i + 1);
+			cout << endl << i + 1 << ". " << ticket.getEvent()->getLocation().getZoneName(i + 1) << " - price: " << ticket.getEvent()->getPriceForZone(i + 1);
 		}
 		int zone;
 
@@ -1085,8 +1090,8 @@ void operator>>(istream& console, Ticket& ticket) {
 			}
 		} while (!ok);
 
-		cout << endl << "Seats for zone " << ticket.getEvent().getLocation().getZoneName(zone) << ": " << endl;
-		ticket.getEvent().printSeatsMap(zone, cout);
+		cout << endl << "Seats for zone " << ticket.getEvent()->getLocation().getZoneName(zone) << ": " << endl;
+		ticket.getEvent()->printSeatsMap(zone, cout);
 		int row, seat;
 
 		do {
@@ -1095,36 +1100,36 @@ void operator>>(istream& console, Ticket& ticket) {
 			cout << endl << "Choose your row: ";
 			ok = 1;
 			console >> row;
-			cout << endl << (row > ticket.getEvent().getLocation().getNrRowsForZone(zone)) << (row - 1 < 0) << ticket.getEvent().isFullRow(zone, row);
-			if (row > ticket.getEvent().getLocation().getNrRowsForZone(zone) || row - 1 < 0 || ticket.getEvent().isFullRow(zone, row)) {
+			cout << endl << (row > ticket.getEvent()->getLocation().getNrRowsForZone(zone)) << (row - 1 < 0) << ticket.getEvent()->isFullRow(zone, row);
+			if (row > ticket.getEvent()->getLocation().getNrRowsForZone(zone) || row - 1 < 0 || ticket.getEvent()->isFullRow(zone, row)) {
 				cout << "Invalid row, please try again";
 				ok = 0;
 			}
 		} while (!ok);
 
-		int** seatsMap = ticket.getEvent().getOccupiedSeatsForZone(zone);
+		int** seatsMap = ticket.getEvent()->getOccupiedSeatsForZone(zone);
 		do {
 			console.clear();
 			console.ignore(10000, '\n');
 			cout << endl << "Choose your seat: " << endl;
-			for (int i = 0; i < ticket.getEvent().getLocation().getSeatsPerRow(zone); i++) {
+			for (int i = 0; i < ticket.getEvent()->getLocation().getSeatsPerRow(zone); i++) {
 				cout << i + 1 << (count_digit(i + 1) == 1 ? "  " : " ");
 			}
 			cout << endl;
-			for (int i = 0; i < ticket.getEvent().getLocation().getSeatsPerRow(zone); i++) {
+			for (int i = 0; i < ticket.getEvent()->getLocation().getSeatsPerRow(zone); i++) {
 				cout << (seatsMap[row - 1][i] == 0 ? '-' : '*') << "  ";
 			}
 			ok = 1;
 			console >> seat;
 			try {
-				ticket.getEvent().checkIfSeatInZone(zone, row, seat);
+				ticket.getEvent()->checkIfSeatInZone(zone, row, seat);
 			}
 			catch (exception e) {
 				cout << endl << "Error: " << e.what();
 				ok = 0;
 				continue;
 			}
-			if (ticket.getEvent().isOccupied(zone, row, seat)) {
+			if (ticket.getEvent()->isOccupied(zone, row, seat)) {
 				cout << endl << "Occupied seat, please try again ";
 				ok = 0;
 			}
